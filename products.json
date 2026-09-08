@@ -1,23 +1,5 @@
 [
   {
-    "id": 1,
-    "title": "منتج تجريبي",
-    "price": 250,
-    "images": [
-      "https://via.placeholder.com/300?text=Nuvora"
-    ],
-    "sizes": [
-      "M",
-      "L",
-      "XL"
-    ],
-    "colors": [
-      "أسود",
-      "أبيض"
-    ],
-    "desc": "وصف المنتج التجريبي الأول"
-  },
-  {
     "id": 1788872256084,
     "title": "champion - تــرنــج",
     "price": 500,
