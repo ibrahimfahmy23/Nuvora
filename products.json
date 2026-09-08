@@ -3,9 +3,41 @@
     "id": 1,
     "title": "منتج تجريبي",
     "price": 250,
-    "images": ["https://via.placeholder.com/300?text=Nuvora"],
-    "sizes": ["M", "L", "XL"],
-    "colors": ["أسود", "أبيض"],
+    "images": [
+      "https://via.placeholder.com/300?text=Nuvora"
+    ],
+    "sizes": [
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      "أسود",
+      "أبيض"
+    ],
     "desc": "وصف المنتج التجريبي الأول"
+  },
+  {
+    "id": 1788872256084,
+    "title": "champion - تــرنــج",
+    "price": 500,
+    "images": [
+      "https://lh3.googleusercontent.com/d/1RuvLM74RCzKjn_lnnfDS9sNLWUmHKEDs",
+      "https://lh3.googleusercontent.com/d/1Zav8BiqiU_RA-e7PZlRjDzeca1dyGdAB",
+      "https://lh3.googleusercontent.com/d/1k6MmqIQk0ApV6E4igIJGP2rxO51P1bCb",
+      "https://lh3.googleusercontent.com/d/1RcMpmI4mFoW6l-WmGDUSQmwhw3m8knd0",
+      "https://lh3.googleusercontent.com/d/1m7Uu1KhLGla2PnzhoNrf2Fjo5ufTdLN1"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L"
+    ],
+    "colors": [
+      "اسود",
+      "ابيض",
+      "زيتي"
+    ],
+    "desc": ""
   }
 ]
