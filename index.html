@@ -280,18 +280,6 @@
             cursor: pointer;
         }
 
-        .json-output {
-            margin-top: 15px;
-            width: 100%;
-            height: 120px;
-            background: #000;
-            color: #0f0;
-            padding: 10px;
-            font-family: monospace;
-            border-radius: 6px;
-            border: 1px solid var(--border-color);
-        }
-
         .modal {
             display: none;
             position: fixed;
@@ -348,6 +336,13 @@
             cursor: pointer;
             margin-top: 10px;
         }
+
+        .status-msg {
+            margin-top: 10px;
+            font-size: 0.9rem;
+            color: var(--accent-gold);
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -371,7 +366,7 @@
         <!-- Admin Control Panel -->
         <div class="admin-panel" id="admin-panel">
             <button class="close-admin" onclick="hideAdminPanel()">✕</button>
-            <h3>لوحة إدارة المنتجات (GitHub)</h3>
+            <h3>لوحة إدارة المنتجات (ربط مباشر مع GitHub)</h3>
             <div class="admin-form">
                 <input type="text" id="p-title" placeholder="اسم المنتج" required>
                 <input type="number" id="p-price" placeholder="السعر (ج.م)" required>
@@ -379,14 +374,9 @@
                 <input type="text" id="p-sizes" placeholder="المقاسات (S, M, L, XL)">
                 <input type="text" id="p-colors" placeholder="الألوان (أسود, أحمر)">
                 <textarea id="p-desc" placeholder="وصف المنتج" style="grid-column: 1 / -1;"></textarea>
-                <button onclick="saveProductLocally()">إضافة المنتج للقائمة وتحديث كود GitHub</button>
+                <button id="save-btn" onclick="saveProductToGitHub()">إضافة المنتج وتحديث GitHub تلقائياً 🚀</button>
             </div>
-            
-            <div style="margin-top:20px;">
-                <p style="font-size:0.85rem; color:var(--accent-gold);">انسخ الكود أدناه وضعه داخل ملف products.json على GitHub لتظهر المنتجات لكل الزوار:</p>
-                <textarea id="json-export" class="json-output" readonly></textarea>
-                <button onclick="copyJSON()" style="background:#333; color:#fff; border:none; padding:8px 15px; border-radius:4px; margin-top:5px; cursor:pointer;">نسخ كود JSON 📋</button>
-            </div>
+            <div id="admin-status" class="status-msg"></div>
         </div>
 
         <!-- Products Grid -->
@@ -415,9 +405,18 @@
         const BOT_TOKEN = '8992277563:AAGL4PZVwqg2YDYb1xDOmk0QWycl_kuykQ8';
         const CHAT_ID = '8951186041';
         const ADMIN_PASSWORD = '123'; 
+        
+        // GitHub API Configuration
+        const GITHUB_REPO = 'ibrahimfahmy23/Nuvora';
+        const GITHUB_FILE = 'products.json';
 
         let products = [];
+        let currentSha = ''; 
         let cart = JSON.parse(localStorage.getItem('nuvora_cart')) || [];
+
+        function getGithubToken() {
+            return localStorage.getItem('nuvora_github_token') || '';
+        }
 
         function formatImgUrl(url) {
             if (!url) return 'https://via.placeholder.com/300?text=Nuvora';
@@ -433,27 +432,37 @@
 
         async function fetchProducts() {
             try {
-                const response = await fetch('products.json?cache_bust=' + Date.now());
-                if (response.ok) {
-                    const rawProducts = await response.json();
-                    products = rawProducts.map(p => ({
-                        ...p,
-                        images: Array.isArray(p.images) ? p.images.map(img => formatImgUrl(img)) : (p.image ? [formatImgUrl(p.image)] : ['https://via.placeholder.com/300?text=Nuvora'])
-                    }));
+                const token = getGithubToken();
+                const headers = token ? { 'Authorization': `token ${token}` } : {};
+                
+                const res = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${GITHUB_FILE}?v=` + Date.now(), { headers });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    currentSha = data.sha;
+                    const content = decodeURIComponent(escape(atob(data.content)));
+                    products = JSON.parse(content);
                     renderProducts();
-                    updateExportJSON();
                 } else {
-                    renderProducts();
+                    console.warn('لم يتم العثور على الملف أو حدوث خطأ');
                 }
             } catch (err) {
-                console.error('خطأ في جلب المنتجات:', err);
-                renderProducts();
+                console.error('خطأ في الاتصال بـ GitHub:', err);
             }
         }
 
         function openAdminPanel() {
             const pass = prompt('أدخل كلمة مرور الأدمن:');
             if (pass === ADMIN_PASSWORD) {
+                if (!getGithubToken()) {
+                    const token = prompt('أدخل GitHub Personal Access Token الخاص بك (سيتذكر المتصفح الرمز لاحقاً):');
+                    if (token) {
+                        localStorage.setItem('nuvora_github_token', token.trim());
+                    } else {
+                        alert('يلزم إدخال الـ Token لتتمكن من إضافة وتحديث المنتجات.');
+                        return;
+                    }
+                }
                 document.getElementById('admin-panel').classList.add('active-admin');
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             } else if (pass !== null) {
@@ -465,18 +474,28 @@
             document.getElementById('admin-panel').classList.remove('active-admin');
         }
 
-        function saveProductLocally() {
+        async function saveProductToGitHub() {
+            const token = getGithubToken();
+            if (!token) {
+                alert('الـ Token غير موجود. يرجى إعادة تسجيل الدخول للوحة التحكم وإدخاله.');
+                return;
+            }
+
             const title = document.getElementById('p-title').value.trim();
             const price = parseFloat(document.getElementById('p-price').value);
             const rawImages = document.getElementById('p-images').value;
             const rawSizes = document.getElementById('p-sizes').value;
             const rawColors = document.getElementById('p-colors').value;
             const desc = document.getElementById('p-desc').value.trim();
+            const statusEl = document.getElementById('admin-status');
 
             if (!title || isNaN(price)) {
                 alert('يرجى كتابة اسم المنتج والسعر بشكل صحيح');
                 return;
             }
+
+            statusEl.innerText = 'جاري رفع المنتج إلى GitHub... ⏳';
+            document.getElementById('save-btn').disabled = true;
 
             const imagesArray = rawImages ? rawImages.split(',').map(url => formatImgUrl(url)) : ['https://via.placeholder.com/300?text=Nuvora'];
             const sizesArray = rawSizes ? rawSizes.split(',').map(s => s.trim()).filter(s => s !== '') : [];
@@ -493,27 +512,45 @@
             };
 
             products.push(newProd);
-            renderProducts();
-            updateExportJSON();
-            alert('تمت إضافة المنتج بالقائمة! انسخ الكود وضعه في ملف products.json على GitHub.');
-            
-            document.getElementById('p-title').value = '';
-            document.getElementById('p-price').value = '';
-            document.getElementById('p-images').value = '';
-            document.getElementById('p-sizes').value = '';
-            document.getElementById('p-colors').value = '';
-            document.getElementById('p-desc').value = '';
-        }
 
-        function updateExportJSON() {
-            document.getElementById('json-export').value = JSON.stringify(products, null, 2);
-        }
+            try {
+                const updatedContent = btoa(unescape(encodeURIComponent(JSON.stringify(products, null, 2))));
+                const bodyData = {
+                    message: `Add product: ${title}`,
+                    content: updatedContent,
+                    sha: currentSha
+                };
 
-        function copyJSON() {
-            const jsonText = document.getElementById('json-export');
-            jsonText.select();
-            document.execCommand('copy');
-            alert('تم نسخ كود JSON بنجاح!');
+                const res = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${GITHUB_FILE}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `token ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(bodyData)
+                });
+
+                if (res.ok) {
+                    const result = await res.json();
+                    currentSha = result.content.sha;
+                    statusEl.innerText = 'تم رفع المنتج بنجاح! سيظهر لجميع الزوار فوراً 🎉';
+                    renderProducts();
+
+                    document.getElementById('p-title').value = '';
+                    document.getElementById('p-price').value = '';
+                    document.getElementById('p-images').value = '';
+                    document.getElementById('p-sizes').value = '';
+                    document.getElementById('p-colors').value = '';
+                    document.getElementById('p-desc').value = '';
+                } else {
+                    statusEl.innerText = 'حدث خطأ أثناء التحديث. تأكد من صحة الـ Token.';
+                }
+            } catch (err) {
+                console.error(err);
+                statusEl.innerText = 'تعذر الاتصال بـ GitHub.';
+            } finally {
+                document.getElementById('save-btn').disabled = false;
+            }
         }
 
         function renderProducts() {
