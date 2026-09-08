@@ -453,30 +453,45 @@
       return;
     }
 
-    container.innerHTML = filtered.map(p => `
-      <article class="product-card">
-        <div class="product-thumb">
-          <img src="${p.image || 'https://via.placeholder.com/400x300?text=Nuvora'}" alt="${p.title}">
-        </div>
-        <div class="product-body">
-          <span class="product-tag">${p.category}</span>
-          <h3>${p.title}</h3>
-          <div class="price-row">
-            <span class="current-price">${p.price} ج.م</span>
-            ${p.oldPrice ? `<span class="old-price">${p.oldPrice} ج.م</span>` : ''}
-          </div>
-          <button class="add-cart-btn" onclick="addToCart('${p.id}')">
-            <span>إضافة للسلة</span>
-          </button>
-          
-          <div class="card-admin-btns" style="display: ${isAdmin ? 'flex' : 'none'};">
-            <button class="btn-edit" onclick="editProduct('${p.id}')">تعديل</button>
-            <button class="btn-delete" onclick="deleteProduct('${p.id}')">حذف</button>
-          </div>
-        </div>
-      </article>
-    `).join('');
-  }
+    ccontainer.innerHTML = filtered.map(p => {
+    // 1. تجهيز الصورة الرئيسية ومعرض الصور المصغرة
+    const imagesList = (p.images && p.images.length > 0) ? p.images : [p.image || 'https://via.placeholder.com/400x300?text=Nuvora'];
+    const mainImg = imagesList[0];
+    
+    let thumbsHTML = '';
+    if (imagesList.length > 1) {
+        thumbsHTML = `<div class="thumb-list" style="display:flex; gap:5px; margin: 8px 0; overflow-x:auto;">` +
+            imagesList.map(imgUrl => 
+                `<img src="${imgUrl}" style="width:40px; height:40px; object-fit:cover; border-radius:4px; cursor:pointer; border:1px solid #444;" onclick="this.closest('.product-card').querySelector('.product-thumb img').src='${imgUrl}'">`
+            ).join('') +
+        `</div>`;
+    }
+
+    // 2. تجهيز قائمة الخيارات (الألوان / المقاسات)
+    let optionsHTML = '';
+    if (p.options && p.options.length > 0) {
+        optionsHTML = `
+            <select id="option-${p.id}" style="width:100%; margin:8px 0; padding:6px; background:#222; color:#fff; border:1px solid #444; border-radius:4px;">
+                ${p.options.map(opt => `<option value="${opt}">${opt}</option>`).join('')}
+            </select>
+        `;
+    }
+
+    return `
+        <article class="product-card">
+            <div class="product-thumb">
+                <img src="${mainImg}" alt="${p.title}">
+            </div>
+            ${thumbsHTML}
+            <div class="product-details">
+                <h3>${p.title}</h3>
+                <p class="price">${p.price} ج.م</p>
+                ${optionsHTML}
+                <button class="btn-primary" onclick="addToCart('${p.id}')">إضافة للسلة</button>
+            </div>
+        </article>
+    `;
+}).join('');
 
   function renderStore() {
     renderCategoryButtons();
