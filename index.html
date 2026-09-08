@@ -29,7 +29,6 @@
             padding-bottom: 60px;
         }
 
-        /* Header & Nav */
         header {
             background: rgba(24, 24, 28, 0.95);
             backdrop-filter: blur(10px);
@@ -82,7 +81,6 @@
             font-size: 12px;
         }
 
-        /* Hero Section */
         .hero {
             text-align: center;
             padding: 40px 20px;
@@ -100,21 +98,18 @@
             font-size: 1rem;
         }
 
-        /* Main Container */
         .container {
             max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
         }
 
-        /* Grid */
         .products-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
             gap: 20px;
         }
 
-        /* Product Card */
         .product-card {
             background: var(--card-bg);
             border: 1px solid var(--border-color);
@@ -230,7 +225,6 @@
             color: #000;
         }
 
-        /* Admin Panel - مخفية تماماً بشكل افتراضي */
         .admin-panel {
             display: none !important; 
             background: #1e1e24;
@@ -260,9 +254,6 @@
             font-size: 1.2rem;
             cursor: pointer;
         }
-        .close-admin:hover {
-            color: #fff;
-        }
 
         .admin-form {
             display: grid;
@@ -289,7 +280,18 @@
             cursor: pointer;
         }
 
-        /* Modal */
+        .json-output {
+            margin-top: 15px;
+            width: 100%;
+            height: 120px;
+            background: #000;
+            color: #0f0;
+            padding: 10px;
+            font-family: monospace;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+        }
+
         .modal {
             display: none;
             position: fixed;
@@ -366,18 +368,24 @@
 
     <div class="container">
 
-        <!-- Admin Control Panel (مخفية كلياً) -->
+        <!-- Admin Control Panel -->
         <div class="admin-panel" id="admin-panel">
             <button class="close-admin" onclick="hideAdminPanel()">✕</button>
-            <h3>لوحة إضافة منتج جديد (أدمن)</h3>
+            <h3>لوحة إدارة المنتجات (GitHub)</h3>
             <div class="admin-form">
                 <input type="text" id="p-title" placeholder="اسم المنتج" required>
                 <input type="number" id="p-price" placeholder="السعر (ج.م)" required>
-                <input type="text" id="p-images" placeholder="روابط الصور مفصولة بفاصلة (img1.jpg, img2.jpg)" style="grid-column: 1 / -1;">
-                <input type="text" id="p-sizes" placeholder="المقاسات مفصولة بفاصلة (مثال: S, M, L, XL)">
-                <input type="text" id="p-colors" placeholder="الألوان مفصولة بفاصلة (مثال: أسود, أحمر)">
+                <input type="text" id="p-images" placeholder="روابط الصور مفصولة بفاصلة" style="grid-column: 1 / -1;">
+                <input type="text" id="p-sizes" placeholder="المقاسات (S, M, L, XL)">
+                <input type="text" id="p-colors" placeholder="الألوان (أسود, أحمر)">
                 <textarea id="p-desc" placeholder="وصف المنتج" style="grid-column: 1 / -1;"></textarea>
-                <button onclick="saveProduct()">إضافة المنتج للمتجر</button>
+                <button onclick="saveProductLocally()">إضافة المنتج مؤقتاً لتحديث الكود</button>
+            </div>
+            
+            <div style="margin-top:20px;">
+                <p style="font-size:0.85rem; color:var(--accent-gold);">انسخ الكود أدناه واستبدله في ملف products.json على GitHub لتحديث المتجر لكل الزوار:</p>
+                <textarea id="json-export" class="json-output" readonly></textarea>
+                <button onclick="copyJSON()" style="background:#333; color:#fff; border:none; padding:8px 15px; border-radius:4px; margin-top:5px; cursor:pointer;">نسخ كود JSON 📋</button>
             </div>
         </div>
 
@@ -396,7 +404,7 @@
                 <h4>بيانات التوصيل:</h4>
                 <input type="text" id="cust-name" placeholder="الاسم بالكامل">
                 <input type="tel" id="cust-phone" placeholder="رقم الهاتف">
-                <input type="text" id="cust-address" placeholder="العنوان تفصيلياً (المحافظة/المنطقة)">
+                <input type="text" id="cust-address" placeholder="العنوان تفصيلياً">
                 <button class="btn-submit" onclick="submitOrder()">إرسال الطلب عبر التليجرام</button>
                 <button style="background:transparent; color:#aaa; border:none; margin-top:5px; cursor:pointer;" onclick="toggleCart()">إغلاق</button>
             </div>
@@ -406,9 +414,32 @@
     <script>
         const BOT_TOKEN = '8992277563:AAGL4PZVwqg2YDYb1xDOmk0QWycl_kuykQ8';
         const CHAT_ID = '8951186041';
-        
-        // كلمة المرور الخاصة بالأدمن (يمكنك تغييرها هنا)
         const ADMIN_PASSWORD = '123'; 
+
+        let products = [];
+        let cart = JSON.parse(localStorage.getItem('nuvora_cart')) || [];
+
+        // جلب المنتجات من ملف products.json الخاص بـ GitHub
+        async function fetchProducts() {
+            try {
+                const response = await fetch('products.json?v=' + new Date().getTime());
+                if (response.ok) {
+                    products = await response.json();
+                    renderProducts();
+                    updateExportJSON();
+                } else {
+                    console.warn('لم يتم العثور على products.json، جاري الاستعانة بـ localStorage');
+                    products = JSON.parse(localStorage.getItem('nuvora_products')) || [];
+                    renderProducts();
+                    updateExportJSON();
+                }
+            } catch (err) {
+                console.error('خطأ في تحميل المنتجات:', err);
+                products = JSON.parse(localStorage.getItem('nuvora_products')) || [];
+                renderProducts();
+                updateExportJSON();
+            }
+        }
 
         function openAdminPanel() {
             const pass = prompt('أدخل كلمة مرور الأدمن:');
@@ -436,10 +467,7 @@
             return url;
         }
 
-        let products = JSON.parse(localStorage.getItem('nuvora_products')) || [];
-        let cart = JSON.parse(localStorage.getItem('nuvora_cart')) || [];
-
-        function saveProduct() {
+        function saveProductLocally() {
             const title = document.getElementById('p-title').value.trim();
             const price = parseFloat(document.getElementById('p-price').value);
             const rawImages = document.getElementById('p-images').value;
@@ -469,7 +497,8 @@
             products.push(newProd);
             localStorage.setItem('nuvora_products', JSON.stringify(products));
             renderProducts();
-            alert('تمت إضافة المنتج بنجاح!');
+            updateExportJSON();
+            alert('تمت إضافة المنتج بالقائمة! قم بنسخ الكود بالأسفل وضعه في ملف products.json على GitHub ليظهر لجميع الزوار.');
             
             document.getElementById('p-title').value = '';
             document.getElementById('p-price').value = '';
@@ -477,6 +506,17 @@
             document.getElementById('p-sizes').value = '';
             document.getElementById('p-colors').value = '';
             document.getElementById('p-desc').value = '';
+        }
+
+        function updateExportJSON() {
+            document.getElementById('json-export').value = JSON.stringify(products, null, 2);
+        }
+
+        function copyJSON() {
+            const jsonText = document.getElementById('json-export');
+            jsonText.select();
+            document.execCommand('copy');
+            alert('تم نسخ كود JSON بنجاح!');
         }
 
         function renderProducts() {
@@ -489,15 +529,7 @@
             }
 
             products.forEach(p => {
-                let imagesList = [];
-                if (Array.isArray(p.images) && p.images.length > 0) {
-                    imagesList = p.images;
-                } else if (p.image) {
-                    imagesList = [p.image];
-                } else {
-                    imagesList = ['https://via.placeholder.com/300?text=Nuvora'];
-                }
-
+                let imagesList = Array.isArray(p.images) && p.images.length > 0 ? p.images : (p.image ? [p.image] : ['https://via.placeholder.com/300?text=Nuvora']);
                 const mainImg = imagesList[0];
                 
                 let thumbHTML = '';
@@ -508,7 +540,6 @@
                 }
 
                 let selectsHTML = '';
-                
                 if (p.sizes && p.sizes.length > 0) {
                     selectsHTML += `<div class="select-group"><label>المقاس:</label><select class="option-select" id="size-${p.id}">` +
                         p.sizes.map(s => `<option value="${s}">${s}</option>`).join('') +
@@ -593,7 +624,6 @@
             let total = 0;
             cart.forEach((item, index) => {
                 total += item.price * item.qty;
-                
                 let details = [];
                 if (item.selectedSize) details.push(`المقاس: ${item.selectedSize}`);
                 if (item.selectedColor) details.push(`اللون: ${item.selectedColor}`);
@@ -672,7 +702,7 @@
                 });
 
                 if (response.ok) {
-                    alert('تم إرسال طلبك بنجاح! وسنتواصل معك قريباً لتأكيد الشحن.');
+                    alert('تم إرسال طلبك بنجاح!');
                     cart = [];
                     updateCartUI();
                     toggleCart();
@@ -680,14 +710,14 @@
                     document.getElementById('cust-phone').value = '';
                     document.getElementById('cust-address').value = '';
                 } else {
-                    alert('حدث خطأ أثناء إرسال الطلب، يرجى المحاولة مرة أخرى.');
+                    alert('حدث خطأ أثناء إرسال الطلب.');
                 }
             } catch (error) {
-                alert('تعذر الاتصال بالسيرفر، يرجى التأكد من الاتصال بالإنترنت.');
+                alert('تعذر الاتصال بالسيرفر.');
             }
         }
 
-        renderProducts();
+        fetchProducts();
         updateCartUI();
     </script>
 </body>
