@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nuvora — متجرك الأول للمنتجات العصرية</title>
+<meta name="description" content="تسوق أحدث صيحات الموضة والمنتجات العصرية بأعلى جودة وأفضل أسعار في متجر Nuvora.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@700;800;900&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#15171B;
+    --ink-2:#1D2025;
+    --ink-3:#25292F;
+    --paper:#F1ECE0;
+    --paper-dim:#B8B2A4;
+    --gold:#C9992F;
+    --gold-hover:#d9aa3d;
+    --red:#d9534f;
+    --green:#28a745;
+    --line:rgba(241,236,224,0.12);
+    --radius:4px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:var(--ink);
+    color:var(--paper);
+    font-family:'Tajawal',sans-serif;
+    font-size:16px;
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,.display{
+    font-family:'Cairo',sans-serif;
+    font-weight:900;
+    line-height:1.2;
+  }
+  a{color:inherit;text-decoration:none;}
+  img,svg{display:block;max-width:100%;}
+  .wrap{max-width:1140px;margin:0 auto;padding:0 28px;}
+
+  /* ---------- Header ---------- */
+  header{
+    position:sticky;top:0;z-index:50;
+    background:rgba(21,23,27,0.95);
+    backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--line);
+  }
+  .nav-row{display:flex;align-items:center;justify-content:space-between;padding:16px 0;}
+  .logo{font-family:'Cairo',sans-serif;font-weight:900;font-size:24px;display:flex;align-items:center;gap:10px;}
+  .logo span.mark{width:36px;height:36px;border:2px solid var(--gold);display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--gold);border-radius:var(--radius);}
+  
+  .nav-left-actions{display:flex;align-items:center;gap:16px;}
+  
+  /* Cart Button Top-Left */
+  .cart-btn-top{
+    position:relative;
+    background:var(--ink-2);
+    border:1px solid var(--gold);
+    color:var(--gold);
+    padding:8px 14px;
+    border-radius:var(--radius);
+    display:flex;
+    align-items:center;
+    gap:8px;
+    cursor:pointer;
+    font-weight:700;
+    font-size:14px;
+    transition:background .2s;
+  }
+  .cart-btn-top:hover{background:var(--gold);color:var(--ink);}
+  .cart-badge{
+    background:var(--red);
+    color:#fff;
+    font-size:12px;
+    border-radius:50%;
+    width:20px;
+    height:20px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:800;
+  }
+
+  /* ---------- Category Filters ---------- */
+  .category-bar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:30px;}
+  .cat-btn{
+    background:var(--ink-2);border:1px solid var(--line);color:var(--paper-dim);
+    padding:8px 18px;border-radius:var(--radius);font-size:14px;font-weight:700;cursor:pointer;transition:all .2s;
+  }
+  .cat-btn:hover, .cat-btn.active{background:var(--gold);color:var(--ink);border-color:var(--gold);}
+
+  /* ---------- Hero ---------- */
+  .hero{padding:60px 0 40px;}
+  .hero h1{font-size:clamp(34px,5vw,48px);margin-bottom:16px;}
+  .hero h1 em{font-style:normal;color:var(--gold);}
+  .hero p.lead{font-size:16px;color:var(--paper-dim);margin-bottom:24px;}
+  .btn-primary{background:var(--gold);color:var(--ink);font-weight:700;padding:12px 24px;border-radius:var(--radius);display:inline-block;cursor:pointer;border:none;}
+  .btn-primary:hover{background:var(--gold-hover);}
+
+  /* ---------- Admin Control Panel ---------- */
+  #admin-panel{
+    display:none;background:var(--ink-3);border:2px solid var(--gold);border-radius:var(--radius);padding:24px;margin:30px 0;
+  }
+  #admin-panel.active{display:block;}
+  .admin-form{display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:14px;margin-top:16px;}
+  .admin-form input{background:var(--ink-2);border:1px solid var(--line);color:var(--paper);padding:10px;border-radius:var(--radius);font-family:inherit;}
+
+  /* ---------- Products Grid ---------- */
+  section{padding:40px 0;border-top:1px solid var(--line);}
+  .section-head{margin-bottom:20px;}
+  .product-grid{display:grid;grid-template-columns:repeat(auto-fill, minmax(260px, 1fr));gap:24px;}
+  .product-card{background:var(--ink-2);border:1px solid var(--line);border-radius:var(--radius);display:flex;flex-direction:column;overflow:hidden;}
+  .product-thumb{aspect-ratio:4/3;background:var(--ink-3);display:flex;align-items:center;justify-content:center;overflow:hidden;}
+  .product-thumb img{width:100%;height:100%;object-fit:cover;}
+  .product-body{padding:20px;display:flex;flex-direction:column;gap:10px;flex:1;}
+  .product-tag{font-size:12px;color:var(--gold);font-weight:700;}
+  .price-row{display:flex;align-items:baseline;gap:10px;margin-top:8px;}
+  .current-price{font-size:20px;font-weight:900;color:var(--paper);font-family:'Cairo',sans-serif;}
+  .old-price{font-size:13px;color:var(--paper-dim);text-decoration:line-through;}
+  
+  .add-cart-btn{
+    width:100%;text-align:center;font-size:14px;font-weight:700;background:var(--gold);
+    color:var(--ink);padding:10px;border-radius:var(--radius);margin-top:10px;cursor:pointer;border:none;
+    display:flex;align-items:center;justify-content:center;gap:8px;
+  }
+  .add-cart-btn:hover{background:var(--gold-hover);}
+
+  .card-admin-btns{display:none;gap:8px;margin-top:10px;}
+  .btn-edit{background:#0275d8;color:#fff;border:none;padding:6px 12px;border-radius:2px;cursor:pointer;}
+  .btn-delete{background:var(--red);color:#fff;border:none;padding:6px 12px;border-radius:2px;cursor:pointer;}
+
+  /* ---------- Modals & Cart Drawer ---------- */
+  .modal-overlay{
+    position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:100;
+    display:none;align-items:center;justify-content:center;padding:20px;
+  }
+  .modal-overlay.open{display:flex;}
+  .modal-card{background:var(--ink-2);border:1px solid var(--gold);padding:24px;border-radius:var(--radius);max-width:450px;width:100%;max-height:90vh;overflow-y:auto;}
+  .modal-card input{width:100%;padding:10px;margin:8px 0 14px;background:var(--ink);border:1px solid var(--line);color:var(--paper);border-radius:var(--radius);}
+
+  /* Cart List Styles */
+  .cart-item{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--line);}
+  .cart-item-title{font-weight:700;font-size:14px;}
+  .cart-item-price{color:var(--gold);font-size:13px;}
+  .qty-controls{display:flex;align-items:center;gap:8px;}
+  .qty-btn{background:var(--ink-3);border:1px solid var(--line);color:var(--paper);width:26px;height:26px;border-radius:2px;cursor:pointer;}
+
+  /* Notification Toast */
+  #toast{
+    position:fixed;bottom:20px;right:20px;background:var(--green);color:#fff;
+    padding:12px 20px;border-radius:var(--radius);font-weight:700;z-index:150;
+    display:none;box-shadow:0 4px 12px rgba(0,0,0,0.3);
+  }
+
+  footer{border-top:1px solid var(--line);padding:30px 0;font-size:14px;color:var(--paper-dim);text-align:center;}
+
+  @media(max-width:768px){
+    .product-grid{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap nav-row">
+    <!-- Right Logo -->
+    <a href="#top" class="logo"><span class="mark">N</span> NUVORA</a>
+    
+    <!-- Left Action: Cart Button -->
+    <div class="nav-left-actions">
+      <button class="cart-btn-top" onclick="toggleCartModal()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+        <span>السلة</span>
+        <span class="cart-badge" id="cart-count">0</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- HERO -->
+  <section class="hero" style="border:none;">
+    <h1>منتجات عصرية <em>بجودة استثنائية</em></h1>
+    <p class="lead">تسوق أحدث التشكيلات مباشرة مع إمكانية التوصيل والشحن لجميع المحافظات.</p>
+  </section>
+
+  <!-- ADMIN CONTROL PANEL (Hidden by Default) -->
+  <div id="admin-panel">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <h3 style="color:var(--gold);" id="form-title">لوحة التحكم — إضافة منتج جديد</h3>
+      <button onclick="logoutAdmin()" style="background:var(--red);color:#fff;border:none;padding:6px 12px;border-radius:2px;cursor:pointer;">تسجيل خروج</button>
+    </div>
+    <form class="admin-form" id="product-form" onsubmit="handleSaveProduct(event)">
+      <input type="hidden" id="edit-id">
+      <input type="text" id="p-title" placeholder="اسم المنتج" required>
+      <input type="text" id="p-category" placeholder="القسم (مثال: ملابس، إكسسوارات)" required>
+      <input type="number" id="p-price" placeholder="السعر (ج.م)" required>
+      <input type="number" id="p-old-price" placeholder="السعر القديم (اختياري)">
+      <input type="url" id="p-image" placeholder="رابط صورة المنتج (URL)">
+      <input type="text" id="p-wa" placeholder="رقم الواتساب لاستلام الطلبات (مثال: 201000000000)" required>
+      <div style="grid-column:1/-1;display:flex;gap:10px;">
+        <button type="submit" class="btn-primary" style="flex:1;">حفظ المنتج</button>
+        <button type="button" onclick="resetForm()" style="background:var(--ink-2);color:var(--paper);border:1px solid var(--line);padding:10px;border-radius:2px;cursor:pointer;">إلغاء</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- PRODUCTS SECTION -->
+  <section id="products">
+    <div class="section-head">
+      <h2>أحدث المنتجات</h2>
+    </div>
+
+    <!-- Category Filter Bar -->
+    <div class="category-bar" id="category-bar"></div>
+
+    <!-- Products Grid -->
+    <div class="product-grid" id="product-container"></div>
+  </section>
+
+</main>
+
+<!-- SHOPPING CART MODAL -->
+<div class="modal-overlay" id="cart-modal">
+  <div class="modal-card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <h3>سلة التسوق</h3>
+      <button onclick="toggleCartModal()" style="background:none;border:none;color:var(--paper);font-size:20px;cursor:pointer;">✕</button>
+    </div>
+
+    <div id="cart-items-list">
+      <!-- يتم عرض المنتجات المضافة هنا -->
+    </div>
+
+    <div style="border-top:1px solid var(--line);margin-top:16px;padding-top:16px;">
+      <div style="display:flex;justify-content:space-between;font-weight:800;font-size:18px;margin-bottom:16px;">
+        <span>الإجمالي:</span>
+        <span id="cart-total-price" style="color:var(--gold);">0 ج.م</span>
+      </div>
+
+      <div id="checkout-form" style="display:none;">
+        <h4 style="margin-bottom:8px;font-size:14px;color:var(--paper-dim);">بيانات التوصيل لاستكمال الطلب:</h4>
+        <input type="text" id="cust-name" placeholder="الاسم بالكامل">
+        <input type="tel" id="cust-phone" placeholder="رقم الهاتف للتواصل">
+        <input type="text" id="cust-address" placeholder="العنوان تفصيلياً (المحافظة / المنطقة)">
+        <button class="btn-primary" style="width:100%;" onclick="submitOrder()">إرسال الطلب وإتمام التوصيل</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- HIDDEN ADMIN LOGIN MODAL -->
+<div class="modal-overlay" id="login-modal">
+  <div class="modal-card" style="text-align:center;">
+    <h3>دخول لوحة التحكم الخفية</h3>
+    <input type="password" id="admin-pass" placeholder="كلمة السر">
+    <div style="display:flex;gap:10px;">
+      <button class="btn-primary" style="flex:1;" onclick="checkPassword()">دخول</button>
+      <button onclick="closeLoginModal()" style="background:none;border:1px solid var(--line);color:var(--paper);padding:10px;border-radius:2px;cursor:pointer;">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST NOTIFICATION -->
+<div id="toast">تمت الإضافة إلى سلة التسوق!</div>
+
+<footer>
+  <div class="wrap">
+    <!-- انقر مرتين هنا للدخول الخفي -->
+    <span id="secret-admin-trigger" style="user-select:none;cursor:default;">© 2026 Nuvora Store. جميع الحقوق محفوظة.</span>
+  </div>
+</footer>
+
+<script>
+  // المنتجات الافتراضية
+  const defaultProducts = [
+    {
+      id: "1",
+      title: "ترنج قطني عصري - طقم كامل",
+      category: "ملابس",
+      price: "850",
+      oldPrice: "1100",
+      image: "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=500&q=80",
+      wa: "201000000000"
+    },
+    {
+      id: "2",
+      title: "ساعة يد كلاسيكية سوداء",
+      category: "إكسسوارات",
+      price: "650",
+      oldPrice: "800",
+      image: "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=500&q=80",
+      wa: "201000000000"
+    }
+  ];
+
+  const ADMIN_PASSWORD = "admin123";
+  let currentCategory = "الكل";
+  let cart = [];
+
+  function getProducts() {
+    const saved = localStorage.getItem('nuvora_products');
+    return saved ? JSON.parse(saved) : defaultProducts;
+  }
+
+  function saveProducts(products) {
+    localStorage.setItem('nuvora_products', JSON.stringify(products));
+    renderStore();
+  }
+
+  /* ---------- CART FUNCTIONS ---------- */
+  function addToCart(id) {
+    const products = getProducts();
+    const product = products.find(p => p.id === id);
+    if (!product) return;
+
+    const existing = cart.find(item => item.id === id);
+    if (existing) {
+      existing.qty += 1;
+    } else {
+      cart.push({ ...product, qty: 1 });
+    }
+
+    updateCartUI();
+    showToast("تم إضافة المنتج للسلة!");
+  }
+
+  function updateQty(id, delta) {
+    const item = cart.find(i => i.id === id);
+    if (!item) return;
+
+    item.qty += delta;
+    if (item.qty <= 0) {
+      cart = cart.filter(i => i.id !== id);
+    }
+    updateCartUI();
+  }
+
+  function updateCartUI() {
+    const countBadge = document.getElementById('cart-count');
+    const itemsContainer = document.getElementById('cart-items-list');
+    const totalPriceEl = document.getElementById('cart-total-price');
+    const checkoutForm = document.getElementById('checkout-form');
+
+    const totalQty = cart.reduce((sum, item) => sum + item.qty, 0);
+    const totalPrice = cart.reduce((sum, item) => sum + (parseFloat(item.price) * item.qty), 0);
+
+    countBadge.innerText = totalQty;
+    totalPriceEl.innerText = `${totalPrice} ج.م`;
+
+    if (cart.length === 0) {
+      itemsContainer.innerHTML = `<p style="color:var(--paper-dim);text-align:center;padding:20px 0;">السلة فارغة حالياً.</p>`;
+      checkoutForm.style.display = 'none';
+    } else {
+      checkoutForm.style.display = 'block';
+      itemsContainer.innerHTML = cart.map(item => `
+        <div class="cart-item">
+          <div>
+            <div class="cart-item-title">${item.title}</div>
+            <div class="cart-item-price">${item.price} ج.م × ${item.qty}</div>
+          </div>
+          <div class="qty-controls">
+            <button class="qty-btn" onclick="updateQty('${item.id}', -1)">-</button>
+            <span>${item.qty}</span>
+            <button class="qty-btn" onclick="updateQty('${item.id}', 1)">+</button>
+          </div>
+        </div>
+      `).join('');
+    }
+  }
+
+  function toggleCartModal() {
+    document.getElementById('cart-modal').classList.toggle('open');
+  }
+
+  function submitOrder() {
+    const name = document.getElementById('cust-name').value.trim();
+    const phone = document.getElementById('cust-phone').value.trim();
+    const address = document.getElementById('cust-address').value.trim();
+
+    if (!name || !phone || !address) {
+      alert("يرجى ملء جميع البيانات لاستكمال الطلب.");
+      return;
+    }
+
+    if (cart.length === 0) return;
+
+    // الحصول على رقم واتساب للتأكيدات (أول رقم متوفر أو رقم افتراضي)
+    const targetWA = cart[0].wa || "201000000000";
+
+    // إعداد نص الطلب
+    let orderMsg = `*طلب جديد من متجر Nuvora* 🛒\n\n`;
+    orderMsg += `*العميل:* ${name}\n`;
+    orderMsg += `*الهاتف:* ${phone}\n`;
+    orderMsg += `*العنوان:* ${address}\n\n`;
+    orderMsg += `*المنتجات المطلوبة:*\n`;
+
+    let total = 0;
+    cart.forEach((item, index) => {
+      const itemTotal = parseFloat(item.price) * item.qty;
+      total += itemTotal;
+      orderMsg += `${index + 1}. ${item.title} (${item.qty} قطعة) - ${itemTotal} ج.م\n`;
+    });
+
+    orderMsg += `\n*الإجمالي الكلي:* ${total} ج.م`;
+
+    // إشعار وتفريغ السلة
+    showToast("تم إنهاء الطلب! جاري التحويل لواتساب للتأكيد...");
+    cart = [];
+    updateCartUI();
+    toggleCartModal();
+
+    // إرسال الطلب عبر الواتساب
+    window.open(`https://wa.me/${targetWA}?text=${encodeURIComponent(orderMsg)}`, '_blank');
+  }
+
+  /* ---------- STORE RENDER ---------- */
+  function renderCategoryButtons() {
+    const products = getProducts();
+    const categories = ["الكل", ...new Set(products.map(p => p.category.trim()).filter(Boolean))];
+    const categoryBar = document.getElementById('category-bar');
+
+    categoryBar.innerHTML = categories.map(cat => `
+      <button class="cat-btn ${cat === currentCategory ? 'active' : ''}" onclick="filterCategory('${cat}')">
+        ${cat}
+      </button>
+    `).join('');
+  }
+
+  function filterCategory(cat) {
+    currentCategory = cat;
+    renderStore();
+  }
+
+  function renderProducts() {
+    const container = document.getElementById('product-container');
+    const products = getProducts();
+    const isAdmin = localStorage.getItem('nuvora_is_admin') === 'true';
+
+    const filtered = currentCategory === "الكل" 
+      ? products 
+      : products.filter(p => p.category.trim() === currentCategory);
+
+    if (filtered.length === 0) {
+      container.innerHTML = `<p style="grid-column:1/-1;color:var(--paper-dim);">لا توجد منتجات في هذا القسم.</p>`;
+      return;
+    }
+
+    container.innerHTML = filtered.map(p => `
+      <article class="product-card">
+        <div class="product-thumb">
+          <img src="${p.image || 'https://via.placeholder.com/400x300?text=Nuvora'}" alt="${p.title}">
+        </div>
+        <div class="product-body">
+          <span class="product-tag">${p.category}</span>
+          <h3>${p.title}</h3>
+          <div class="price-row">
+            <span class="current-price">${p.price} ج.م</span>
+            ${p.oldPrice ? `<span class="old-price">${p.oldPrice} ج.م</span>` : ''}
+          </div>
+          <button class="add-cart-btn" onclick="addToCart('${p.id}')">
+            <span>إضافة للسلة</span>
+          </button>
+          
+          <div class="card-admin-btns" style="display: ${isAdmin ? 'flex' : 'none'};">
+            <button class="btn-edit" onclick="editProduct('${p.id}')">تعديل</button>
+            <button class="btn-delete" onclick="deleteProduct('${p.id}')">حذف</button>
+          </div>
+        </div>
+      </article>
+    `).join('');
+  }
+
+  function renderStore() {
+    renderCategoryButtons();
+    renderProducts();
+
+    const isAdmin = localStorage.getItem('nuvora_is_admin') === 'true';
+    const adminPanel = document.getElementById('admin-panel');
+    if(isAdmin) {
+      adminPanel.classList.add('active');
+    } else {
+      adminPanel.classList.remove('active');
+    }
+  }
+
+  /* ---------- ADMIN FUNCTIONS ---------- */
+  function handleSaveProduct(e) {
+    e.preventDefault();
+    const id = document.getElementById('edit-id').value;
+    const title = document.getElementById('p-title').value;
+    const category = document.getElementById('p-category').value;
+    const price = document.getElementById('p-price').value;
+    const oldPrice = document.getElementById('p-old-price').value;
+    const image = document.getElementById('p-image').value;
+    const wa = document.getElementById('p-wa').value;
+
+    let products = getProducts();
+
+    if (id) {
+      products = products.map(p => p.id === id ? { id, title, category, price, oldPrice, image, wa } : p);
+    } else {
+      products.push({ id: Date.now().toString(), title, category, price, oldPrice, image, wa });
+    }
+
+    saveProducts(products);
+    resetForm();
+    showToast("تم حفظ المنتج بنجاح!");
+  }
+
+  function editProduct(id) {
+    const p = getProducts().find(prod => prod.id === id);
+    if (!p) return;
+    document.getElementById('edit-id').value = p.id;
+    document.getElementById('p-title').value = p.title;
+    document.getElementById('p-category').value = p.category;
+    document.getElementById('p-price').value = p.price;
+    document.getElementById('p-old-price').value = p.oldPrice || '';
+    document.getElementById('p-image').value = p.image || '';
+    document.getElementById('p-wa').value = p.wa;
+    document.getElementById('form-title').innerText = "تعديل بيانات المنتج";
+    window.scrollTo({ top: document.getElementById('admin-panel').offsetTop - 80, behavior: 'smooth' });
+  }
+
+  function deleteProduct(id) {
+    if (confirm("هل أنت تأكد من حذف هذا المنتج؟")) {
+      const products = getProducts().filter(p => p.id !== id);
+      saveProducts(products);
+    }
+  }
+
+  function resetForm() {
+    document.getElementById('product-form').reset();
+    document.getElementById('edit-id').value = '';
+    document.getElementById('form-title').innerText = "لوحة التحكم — إضافة منتج جديد";
+  }
+
+  /* ---------- SECRET ADMIN ACCESS ---------- */
+  // 1. Double Click on footer text
+  document.getElementById('secret-admin-trigger').addEventListener('dblclick', openLoginModal);
+
+  // 2. Keyboard shortcut: Ctrl + Shift + A
+  document.addEventListener('keydown', (e) => {
+    if (e.ctrlKey && e.shiftKey && (e.key === 'A' || e.key === 'a')) {
+      openLoginModal();
+    }
+  });
+
+  function openLoginModal() {
+    if(localStorage.getItem('nuvora_is_admin') === 'true') {
+      window.scrollTo({ top: document.getElementById('admin-panel').offsetTop - 80, behavior: 'smooth' });
+    } else {
+      document.getElementById('login-modal').classList.add('open');
+    }
+  }
+
+  function closeLoginModal() {
+    document.getElementById('login-modal').classList.remove('open');
+  }
+
+  function checkPassword() {
+    const pass = document.getElementById('admin-pass').value;
+    if (pass === ADMIN_PASSWORD) {
+      localStorage.setItem('nuvora_is_admin', 'true');
+      closeLoginModal();
+      renderStore();
+      showToast("تم تسجيل الدخول كأدمن!");
+    } else {
+      alert("كلمة السر غير صحيحة!");
+    }
+  }
+
+  function logoutAdmin() {
+    localStorage.removeItem('nuvora_is_admin');
+    renderStore();
+    showToast("تم تسجيل الخروج.");
+  }
+
+  function showToast(msg) {
+    const toast = document.getElementById('toast');
+    toast.innerText = msg;
+    toast.style.display = 'block';
+    setTimeout(() => { toast.style.display = 'none'; }, 3000);
+  }
+
+  renderStore();
+  updateCartUI();
+</script>
+
+</body>
+</html>
