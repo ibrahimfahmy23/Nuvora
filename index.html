@@ -189,8 +189,8 @@
         .select-group {
             display: flex;
             flex-direction: column;
-            gap: 8px;
-            margin-bottom: 12px;
+            gap: 6px;
+            margin-bottom: 10px;
         }
 
         .select-group label {
@@ -431,7 +431,7 @@
             document.getElementById('p-price').value = '';
             document.getElementById('p-images').value = '';
             document.getElementById('p-sizes').value = '';
-            document.getElementById('p-colors').value = '';
+            document.getElementById('p-colors').value = me = '';
             document.getElementById('p-desc').value = '';
         }
 
@@ -445,26 +445,45 @@
             }
 
             products.forEach(p => {
-                const mainImg = p.images && p.images.length > 0 ? p.images[0] : 'https://via.placeholder.com/300';
+                // معالجة توافقية الصور (سواء كانت مصفوفة أو صورة واحدة قديمة أو خيارات قديمة)
+                let imagesList = [];
+                if (Array.isArray(p.images) && p.images.length > 0) {
+                    imagesList = p.images;
+                } else if (p.image) {
+                    imagesList = [p.image];
+                } else {
+                    imagesList = ['https://via.placeholder.com/300?text=Nuvora'];
+                }
+
+                const mainImg = imagesList[0];
                 
                 let thumbHTML = '';
-                if (p.images && p.images.length > 1) {
+                if (imagesList.length > 1) {
                     thumbHTML = `<div class="thumb-bar">` +
-                        p.images.map((img, idx) => `<img src="${img}" class="${idx === 0 ? 'active' : ''}" onclick="changeImg(${p.id}, '${img}', this)">`).join('') +
+                        imagesList.map((img, idx) => `<img src="${img}" class="${idx === 0 ? 'active' : ''}" onclick="changeImg(${p.id}, '${img}', this)">`).join('') +
                     `</div>`;
                 }
 
                 let selectsHTML = '';
                 
+                // معالجة المقاسات الجديدة
                 if (p.sizes && p.sizes.length > 0) {
                     selectsHTML += `<div class="select-group"><label>المقاس:</label><select class="option-select" id="size-${p.id}">` +
                         p.sizes.map(s => `<option value="${s}">${s}</option>`).join('') +
                     `</select></div>`;
                 }
 
+                // معالجة الألوان الجديدة
                 if (p.colors && p.colors.length > 0) {
                     selectsHTML += `<div class="select-group"><label>اللون:</label><select class="option-select" id="color-${p.id}">` +
                         p.colors.map(c => `<option value="${c}">${c}</option>`).join('') +
+                    `</select></div>`;
+                }
+
+                // دعم توافقي للخيارات القديمة
+                if (p.options && p.options.length > 0 && (!p.sizes || p.sizes.length === 0) && (!p.colors || p.colors.length === 0)) {
+                    selectsHTML += `<div class="select-group"><label>الخيار:</label><select class="option-select" id="opt-${p.id}">` +
+                        p.options.map(o => `<option value="${o}">${o}</option>`).join('') +
                     `</select></div>`;
                 }
 
@@ -503,14 +522,17 @@
 
             const sizeEl = document.getElementById(`size-${prodId}`);
             const colorEl = document.getElementById(`color-${prodId}`);
+            const optEl = document.getElementById(`opt-${prodId}`);
 
             const selectedSize = sizeEl ? sizeEl.value : null;
             const selectedColor = colorEl ? colorEl.value : null;
+            const selectedOpt = optEl ? optEl.value : null;
 
             const existingIndex = cart.findIndex(c => 
                 c.id === prodId && 
                 c.selectedSize === selectedSize && 
-                c.selectedColor === selectedColor
+                c.selectedColor === selectedColor &&
+                c.selectedOpt === selectedOpt
             );
             
             if (existingIndex > -1) {
@@ -522,6 +544,7 @@
                     price: prod.price,
                     selectedSize,
                     selectedColor,
+                    selectedOpt,
                     qty: 1
                 });
             }
@@ -544,6 +567,7 @@
                 let details = [];
                 if (item.selectedSize) details.push(`المقاس: ${item.selectedSize}`);
                 if (item.selectedColor) details.push(`اللون: ${item.selectedColor}`);
+                if (item.selectedOpt) details.push(`الخيار: ${item.selectedOpt}`);
                 const detailsStr = details.length > 0 ? ` (${details.join(' | ')})` : '';
 
                 cartItemsEl.innerHTML += `
@@ -593,6 +617,7 @@
                 let details = [];
                 if (item.selectedSize) details.push(`المقاس: ${item.selectedSize}`);
                 if (item.selectedColor) details.push(`اللون: ${item.selectedColor}`);
+                if (item.selectedOpt) details.push(`الخيار: ${item.selectedOpt}`);
                 const detailsStr = details.length > 0 ? ` [${details.join(' | ')}]` : '';
 
                 return `${index + 1}. ${item.title}${detailsStr}\n    العدد: ${item.qty} | السعر: ${item.price * item.qty} ج.م`;
