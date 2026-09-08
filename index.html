@@ -379,11 +379,11 @@
                 <input type="text" id="p-sizes" placeholder="المقاسات (S, M, L, XL)">
                 <input type="text" id="p-colors" placeholder="الألوان (أسود, أحمر)">
                 <textarea id="p-desc" placeholder="وصف المنتج" style="grid-column: 1 / -1;"></textarea>
-                <button onclick="saveProductLocally()">إضافة المنتج مؤقتاً لتحديث الكود</button>
+                <button onclick="saveProductLocally()">إضافة المنتج للقائمة وتحديث كود GitHub</button>
             </div>
             
             <div style="margin-top:20px;">
-                <p style="font-size:0.85rem; color:var(--accent-gold);">انسخ الكود أدناه واستبدله في ملف products.json على GitHub لتحديث المتجر لكل الزوار:</p>
+                <p style="font-size:0.85rem; color:var(--accent-gold);">انسخ الكود أدناه وضعه داخل ملف products.json على GitHub لتظهر المنتجات لكل الزوار:</p>
                 <textarea id="json-export" class="json-output" readonly></textarea>
                 <button onclick="copyJSON()" style="background:#333; color:#fff; border:none; padding:8px 15px; border-radius:4px; margin-top:5px; cursor:pointer;">نسخ كود JSON 📋</button>
             </div>
@@ -419,25 +419,35 @@
         let products = [];
         let cart = JSON.parse(localStorage.getItem('nuvora_cart')) || [];
 
-        // جلب المنتجات من ملف products.json الخاص بـ GitHub
+        function formatImgUrl(url) {
+            if (!url) return 'https://via.placeholder.com/300?text=Nuvora';
+            url = url.trim();
+            if (url.includes('drive.google.com') && url.includes('/d/')) {
+                const match = url.match(/\/d\/([^\/]+)/);
+                if (match && match[1]) {
+                    return `https://lh3.googleusercontent.com/d/${match[1]}`;
+                }
+            }
+            return url;
+        }
+
         async function fetchProducts() {
             try {
-                const response = await fetch('products.json?v=' + new Date().getTime());
+                const response = await fetch('products.json?cache_bust=' + Date.now());
                 if (response.ok) {
-                    products = await response.json();
+                    const rawProducts = await response.json();
+                    products = rawProducts.map(p => ({
+                        ...p,
+                        images: Array.isArray(p.images) ? p.images.map(img => formatImgUrl(img)) : (p.image ? [formatImgUrl(p.image)] : ['https://via.placeholder.com/300?text=Nuvora'])
+                    }));
                     renderProducts();
                     updateExportJSON();
                 } else {
-                    console.warn('لم يتم العثور على products.json، جاري الاستعانة بـ localStorage');
-                    products = JSON.parse(localStorage.getItem('nuvora_products')) || [];
                     renderProducts();
-                    updateExportJSON();
                 }
             } catch (err) {
-                console.error('خطأ في تحميل المنتجات:', err);
-                products = JSON.parse(localStorage.getItem('nuvora_products')) || [];
+                console.error('خطأ في جلب المنتجات:', err);
                 renderProducts();
-                updateExportJSON();
             }
         }
 
@@ -453,18 +463,6 @@
 
         function hideAdminPanel() {
             document.getElementById('admin-panel').classList.remove('active-admin');
-        }
-
-        function formatImgUrl(url) {
-            if (!url) return 'https://via.placeholder.com/300?text=Nuvora';
-            url = url.trim();
-            if (url.includes('drive.google.com') && url.includes('/d/')) {
-                const match = url.match(/\/d\/([^\/]+)/);
-                if (match && match[1]) {
-                    return `https://lh3.googleusercontent.com/d/${match[1]}`;
-                }
-            }
-            return url;
         }
 
         function saveProductLocally() {
@@ -495,10 +493,9 @@
             };
 
             products.push(newProd);
-            localStorage.setItem('nuvora_products', JSON.stringify(products));
             renderProducts();
             updateExportJSON();
-            alert('تمت إضافة المنتج بالقائمة! قم بنسخ الكود بالأسفل وضعه في ملف products.json على GitHub ليظهر لجميع الزوار.');
+            alert('تمت إضافة المنتج بالقائمة! انسخ الكود وضعه في ملف products.json على GitHub.');
             
             document.getElementById('p-title').value = '';
             document.getElementById('p-price').value = '';
@@ -529,7 +526,7 @@
             }
 
             products.forEach(p => {
-                let imagesList = Array.isArray(p.images) && p.images.length > 0 ? p.images : (p.image ? [p.image] : ['https://via.placeholder.com/300?text=Nuvora']);
+                let imagesList = Array.isArray(p.images) && p.images.length > 0 ? p.images : ['https://via.placeholder.com/300?text=Nuvora'];
                 const mainImg = imagesList[0];
                 
                 let thumbHTML = '';
