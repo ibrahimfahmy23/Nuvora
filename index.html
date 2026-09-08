@@ -377,46 +377,58 @@
     document.getElementById('cart-modal').classList.toggle('open');
   }
 
-  function submitOrder() {
-    const name = document.getElementById('cust-name').value.trim();
-    const phone = document.getElementById('cust-phone').value.trim();
-    const address = document.getElementById('cust-address').value.trim();
+async function submitOrder() {
+    const name = document.getElementById('cust-name')?.value.trim();
+    const phone = document.getElementById('cust-phone')?.value.trim();
+    const address = document.getElementById('cust-address')?.value.trim();
 
     if (!name || !phone || !address) {
-      alert("يرجى ملء جميع البيانات لاستكمال الطلب.");
-      return;
+        alert('يرجى ملء جميع البيانات لاستكمال الطلب.');
+        return;
     }
 
-    if (cart.length === 0) return;
+    if (!cart || cart.length === 0) {
+        alert('السلة فارغة!');
+        return;
+    }
 
-    // الحصول على رقم واتساب للتأكيدات (أول رقم متوفر أو رقم افتراضي)
-    const targetWA = cart[0].wa || "201000000000";
+    const BOT_TOKEN = '8992277563:AAGL4PZVwqg2YDYb1xDOmk0QWycl_kuykQ8';
+    const CHAT_ID = '8951186041';
 
-    // إعداد نص الطلب
-    let orderMsg = `*طلب جديد من متجر Nuvora* 🛒\n\n`;
-    orderMsg += `*العميل:* ${name}\n`;
-    orderMsg += `*الهاتف:* ${phone}\n`;
-    orderMsg += `*العنوان:* ${address}\n\n`;
-    orderMsg += `*المنتجات المطلوبة:*\n`;
+    let itemsList = cart.map((item, index) => `${index + 1}. ${item.title} - العدد: ${item.qty} - السعر: ${item.price * item.qty} ج.م`).join('\n');
+    let totalSum = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
 
-    let total = 0;
-    cart.forEach((item, index) => {
-      const itemTotal = parseFloat(item.price) * item.qty;
-      total += itemTotal;
-      orderMsg += `${index + 1}. ${item.title} (${item.qty} قطعة) - ${itemTotal} ج.م\n`;
-    });
+    const message = `🛍️ *طلب جديد من متجر Nuvora*\n\n` +
+                    `👤 *اسم العميل:* ${name}\n` +
+                    `📞 *رقم الهاتف:* ${phone}\n` +
+                    `📍 *العنوان:* ${address}\n\n` +
+                    `📦 *تفاصيل المنتجات:*\n${itemsList}\n\n` +
+                    `💰 *الإجمالي النهائي:* ${totalSum} جنيه مصري`;
 
-    orderMsg += `\n*الإجمالي الكلي:* ${total} ج.م`;
+    try {
+        const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                chat_id: CHAT_ID,
+                text: message,
+                parse_mode: 'Markdown'
+            })
+        });
 
-    // إشعار وتفريغ السلة
-    showToast("تم إنهاء الطلب! جاري التحويل لواتساب للتأكيد...");
-    cart = [];
-    updateCartUI();
-    toggleCartModal();
-
-    // إرسال الطلب عبر الواتساب
-    window.open(`https://wa.me/${targetWA}?text=${encodeURIComponent(orderMsg)}`, '_blank');
-  }
+        if (response.ok) {
+            alert('تم إرسال طلبك بنجاح! وسنتواصل معك قريباً لتأكيد الشحن.');
+            cart = [];
+            if (typeof updateCartUI === 'function') updateCartUI();
+            if (typeof closeCartModal === 'function') closeCartModal();
+            localStorage.removeItem('nuvora_cart');
+        } else {
+            alert('حدث خطأ أثناء إرسال الطلب، يرجى المحاولة مرة أخرى.');
+        }
+    } catch (error) {
+        alert('تعذر الاتصال بالسيرفر، يرجى التأكد من الاتصال بالإنترنت.');
+    }
+}
 
   /* ---------- STORE RENDER ---------- */
   function renderCategoryButtons() {
