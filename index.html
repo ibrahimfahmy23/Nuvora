@@ -53,7 +53,7 @@
             width: auto;
             display: block;
             object-fit: contain;
-            pointer-events: none; /* لتسهيل الضغط المزدوج */
+            pointer-events: none;
         }
 
         .cart-btn {
@@ -230,15 +230,19 @@
             color: #000;
         }
 
-        /* Admin Panel (Hidden by default) */
+        /* Admin Panel - مخفية تماماً بشكل افتراضي */
         .admin-panel {
-            display: none; 
+            display: none !important; 
             background: #1e1e24;
             border: 1px dashed var(--accent-gold);
             padding: 20px;
             border-radius: 12px;
             margin-bottom: 30px;
             position: relative;
+        }
+
+        .admin-panel.active-admin {
+            display: block !important;
         }
 
         .admin-panel h3 {
@@ -347,8 +351,7 @@
 <body>
 
     <header>
-        <!-- تم إضافة خاصية النقر المزدوج هنا لفتح اللوحة -->
-        <div class="logo" ondblclick="openAdminPanel()" title="انقر مرتين للوصول للوحة التحكم">
+        <div class="logo" ondblclick="openAdminPanel()" title="النقر المزدوج لتسجيل دخول الأدمن">
             <img src="logo.jpg" alt="Nuvora Logo">
         </div>
         <button class="cart-btn" onclick="toggleCart()">
@@ -363,7 +366,7 @@
 
     <div class="container">
 
-        <!-- Admin Control Panel (Hidden) -->
+        <!-- Admin Control Panel (مخفية كلياً) -->
         <div class="admin-panel" id="admin-panel">
             <button class="close-admin" onclick="hideAdminPanel()">✕</button>
             <h3>لوحة إضافة منتج جديد (أدمن)</h3>
@@ -404,13 +407,13 @@
         const BOT_TOKEN = '8992277563:AAGL4PZVwqg2YDYb1xDOmk0QWycl_kuykQ8';
         const CHAT_ID = '8951186041';
         
-        // كلمة المرور الخاصة بالأدمن (يمكنك تغييرها هنا بسهولة)
-        const ADMIN_PASSWORD = '01202178881*+iB'; 
+        // كلمة المرور الخاصة بالأدمن (يمكنك تغييرها هنا)
+        const ADMIN_PASSWORD = '123'; 
 
         function openAdminPanel() {
             const pass = prompt('أدخل كلمة مرور الأدمن:');
             if (pass === ADMIN_PASSWORD) {
-                document.getElementById('admin-panel').style.display = 'block';
+                document.getElementById('admin-panel').classList.add('active-admin');
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             } else if (pass !== null) {
                 alert('كلمة المرور غير صحيحة!');
@@ -418,7 +421,7 @@
         }
 
         function hideAdminPanel() {
-            document.getElementById('admin-panel').style.display = 'none';
+            document.getElementById('admin-panel').classList.remove('active-admin');
         }
 
         function formatImgUrl(url) {
@@ -481,7 +484,7 @@
             container.innerHTML = '';
 
             if (products.length === 0) {
-                container.innerHTML = '<p style="color:var(--text-muted); grid-column: 1/-1; text-align:center;">لا توجد منتجات حالياً. انقر مرتين على الشعار في الأعلى لتسجيل دخول الأدمن وإضافة منتجات.</p>';
+                container.innerHTML = '<p style="color:var(--text-muted); grid-column: 1/-1; text-align:center;">لا توجد منتجات حالياً.</p>';
                 return;
             }
 
