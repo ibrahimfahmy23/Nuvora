@@ -200,8 +200,11 @@
       <input type="text" id="p-category" placeholder="القسم (مثال: ملابس، إكسسوارات)" required>
       <input type="number" id="p-price" placeholder="السعر (ج.م)" required>
       <input type="number" id="p-old-price" placeholder="السعر القديم (اختياري)">
-      <input type="url" id="p-image" placeholder="رابط صورة المنتج (URL)">
-      <input type="text" id="p-wa" placeholder="رقم الواتساب لاستلام الطلبات (مثال: 201000000000)" required>
+     <!-- خانة روابط الصور (مفصولة بفاصلة) -->
+     <input type="text" id="p-images" placeholder="روابط الصور (ضع فاصلة , بين كل رابط وآخر)" style="width:100%; margin-bottom:10px; padding:8px; border:1px solid #ccc; border-radius:4px;">
+     <!-- خانة الألوان أو الخيارات -->
+     <input type="text" id="p-options" placeholder="الألوان أو المقاسات (مثال: أحمر, أسود, أزرق)" style="width:100%; margin-bottom:10px; padding:8px; border:1px solid #ccc; border-radius:4px;">
+     <input type="text" id="p-wa" placeholder="رقم الواتساب لاستلام الطلبات (مثال: 201000000000)" required>
       <div style="grid-column:1/-1;display:flex;gap:10px;">
         <button type="submit" class="btn-primary" style="flex:1;">حفظ المنتج</button>
         <button type="button" onclick="resetForm()" style="background:var(--ink-2);color:var(--paper);border:1px solid var(--line);padding:10px;border-radius:2px;cursor:pointer;">إلغاء</button>
@@ -489,28 +492,44 @@
   }
 
   /* ---------- ADMIN FUNCTIONS ---------- */
-  function handleSaveProduct(e) {
+ function handleSaveProduct(e) {
     e.preventDefault();
-    const id = document.getElementById('edit-id').value;
+    const id = document.getElementById('edit-id')?.value || '';
     const title = document.getElementById('p-title').value;
     const category = document.getElementById('p-category').value;
     const price = document.getElementById('p-price').value;
     const oldPrice = document.getElementById('p-old-price').value;
-    const image = document.getElementById('p-image').value;
-    const wa = document.getElementById('p-wa').value;
+    
+    // قراءة الصور المتعددة وتحويلها لمصفوفة
+    const rawImages = document.getElementById('p-images')?.value || '';
+    const images = rawImages ? rawImages.split(',').map(img => img.trim()).filter(img => img !== '') : [];
+
+    // قراءة خيارات المنتج (الألوان/المقاسات)
+    const rawOptions = document.getElementById('p-options')?.value || '';
+    const options = rawOptions ? rawOptions.split(',').map(opt => opt.trim()).filter(opt => opt !== '') : [];
 
     let products = getProducts();
 
+    const productData = {
+        id: id || Date.now().toString(),
+        title,
+        category,
+        price,
+        oldPrice,
+        images,
+        options
+    };
+
     if (id) {
-      products = products.map(p => p.id === id ? { id, title, category, price, oldPrice, image, wa } : p);
+        products = products.map(p => p.id === id ? productData : p);
     } else {
-      products.push({ id: Date.now().toString(), title, category, price, oldPrice, image, wa });
+        products.push(productData);
     }
 
     saveProducts(products);
-    resetForm();
-    showToast("تم حفظ المنتج بنجاح!");
-  }
+    if (typeof resetForm === 'function') resetForm();
+    if (typeof showToast === 'function') showToast("تم حفظ المنتج بنجاح!");
+}
 
   function editProduct(id) {
     const p = getProducts().find(prod => prod.id === id);
