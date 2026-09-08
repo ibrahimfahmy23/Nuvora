@@ -14,6 +14,7 @@
             --text-main: #f0f0f0;
             --text-muted: #aaa;
             --border-color: #2a2a30;
+            --danger-color: #e74c3c;
         }
 
         * {
@@ -119,6 +120,7 @@
             flex-direction: column;
             justify-content: space-between;
             transition: transform 0.2s;
+            position: relative;
         }
 
         .product-card:hover {
@@ -223,6 +225,39 @@
         .btn-add:hover {
             background: var(--accent-gold);
             color: #000;
+        }
+
+        /* Admin Controls for Cards */
+        .admin-controls {
+            display: none;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        body.is-admin-mode .admin-controls {
+            display: flex;
+        }
+
+        .btn-edit {
+            flex: 1;
+            background: #2980b9;
+            color: #fff;
+            border: none;
+            padding: 6px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .btn-delete {
+            flex: 1;
+            background: var(--danger-color);
+            color: #fff;
+            border: none;
+            padding: 6px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
         }
 
         .admin-panel {
@@ -366,7 +401,8 @@
         <!-- Admin Control Panel -->
         <div class="admin-panel" id="admin-panel">
             <button class="close-admin" onclick="hideAdminPanel()">✕</button>
-            <h3>لوحة إدارة المنتجات (ربط مباشر مع GitHub)</h3>
+            <h3 id="form-title">إضافة منتج جديد</h3>
+            <input type="hidden" id="editing-id" value="">
             <div class="admin-form">
                 <input type="text" id="p-title" placeholder="اسم المنتج" required>
                 <input type="number" id="p-price" placeholder="السعر (ج.م)" required>
@@ -374,7 +410,8 @@
                 <input type="text" id="p-sizes" placeholder="المقاسات (S, M, L, XL)">
                 <input type="text" id="p-colors" placeholder="الألوان (أسود, أحمر)">
                 <textarea id="p-desc" placeholder="وصف المنتج" style="grid-column: 1 / -1;"></textarea>
-                <button id="save-btn" onclick="saveProductToGitHub()">إضافة المنتج وتحديث GitHub تلقائياً 🚀</button>
+                <button id="save-btn" onclick="saveProductToGitHub()">حفظ المنتج وتحديث GitHub تلقائياً 🚀</button>
+                <button id="cancel-edit-btn" onclick="resetForm()" style="background:#555; color:#fff; display:none;">إلغاء التعديل</button>
             </div>
             <div id="admin-status" class="status-msg"></div>
         </div>
@@ -455,14 +492,15 @@
             const pass = prompt('أدخل كلمة مرور الأدمن:');
             if (pass === ADMIN_PASSWORD) {
                 if (!getGithubToken()) {
-                    const token = prompt('أدخل GitHub Personal Access Token الخاص بك (سيتذكر المتصفح الرمز لاحقاً):');
+                    const token = prompt('أدخل GitHub Personal Access Token الخاص بك:');
                     if (token) {
                         localStorage.setItem('nuvora_github_token', token.trim());
                     } else {
-                        alert('يلزم إدخال الـ Token لتتمكن من إضافة وتحديث المنتجات.');
+                        alert('يلزم إدخال الـ Token لتتمكن من إدارة المنتجات.');
                         return;
                     }
                 }
+                document.body.classList.add('is-admin-mode');
                 document.getElementById('admin-panel').classList.add('active-admin');
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             } else if (pass !== null) {
@@ -472,51 +510,115 @@
 
         function hideAdminPanel() {
             document.getElementById('admin-panel').classList.remove('active-admin');
+            document.body.classList.remove('is-admin-mode');
+            resetForm();
+        }
+
+        function editProduct(id) {
+            const prod = products.find(p => p.id === id);
+            if (!prod) return;
+
+            document.getElementById('editing-id').value = prod.id;
+            document.getElementById('p-title').value = prod.title || '';
+            document.getElementById('p-price').value = prod.price || '';
+            document.getElementById('p-images').value = prod.images ? prod.images.join(', ') : '';
+            document.getElementById('p-sizes').value = prod.sizes ? prod.sizes.join(', ') : '';
+            document.getElementById('p-colors').value = prod.colors ? prod.colors.join(', ') : '';
+            document.getElementById('p-desc').value = prod.desc || '';
+
+            document.getElementById('form-title').innerText = 'تعديل المنتج ✏️';
+            document.getElementById('cancel-edit-btn').style.display = 'block';
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function resetForm() {
+            document.getElementById('editing-id').value = '';
+            document.getElementById('p-title').value = '';
+            document.getElementById('p-price').value = '';
+            document.getElementById('p-images').value = '';
+            document.getElementById('p-sizes').value = '';
+            document.getElementById('p-colors').value = '';
+            document.getElementById('p-desc').value = '';
+
+            document.getElementById('form-title').innerText = 'إضافة منتج جديد';
+            document.getElementById('cancel-edit-btn').style.display = 'none';
+        }
+
+        async function deleteProduct(id) {
+            if (!confirm('هل أنت تأكد من إرادتك لحذف هذا المنتج؟')) return;
+
+            products = products.filter(p => p.id !== id);
+            await pushToGitHub('حذف منتج');
         }
 
         async function saveProductToGitHub() {
             const token = getGithubToken();
             if (!token) {
-                alert('الـ Token غير موجود. يرجى إعادة تسجيل الدخول للوحة التحكم وإدخاله.');
+                alert('الـ Token غير موجود. يرجى إعادة تسجيل الدخول للوحة التحكم.');
                 return;
             }
 
+            const editingId = document.getElementById('editing-id').value;
             const title = document.getElementById('p-title').value.trim();
             const price = parseFloat(document.getElementById('p-price').value);
             const rawImages = document.getElementById('p-images').value;
             const rawSizes = document.getElementById('p-sizes').value;
             const rawColors = document.getElementById('p-colors').value;
             const desc = document.getElementById('p-desc').value.trim();
-            const statusEl = document.getElementById('admin-status');
 
             if (!title || isNaN(price)) {
                 alert('يرجى كتابة اسم المنتج والسعر بشكل صحيح');
                 return;
             }
 
-            statusEl.innerText = 'جاري رفع المنتج إلى GitHub... ⏳';
-            document.getElementById('save-btn').disabled = true;
-
             const imagesArray = rawImages ? rawImages.split(',').map(url => formatImgUrl(url)) : ['https://via.placeholder.com/300?text=Nuvora'];
             const sizesArray = rawSizes ? rawSizes.split(',').map(s => s.trim()).filter(s => s !== '') : [];
             const colorsArray = rawColors ? rawColors.split(',').map(c => c.trim()).filter(c => c !== '') : [];
 
-            const newProd = {
-                id: Date.now(),
-                title,
-                price,
-                images: imagesArray,
-                sizes: sizesArray,
-                colors: colorsArray,
-                desc
-            };
+            if (editingId) {
+                // تعديل منتج قائم
+                const index = products.findIndex(p => p.id == editingId);
+                if (index !== -1) {
+                    products[index] = {
+                        id: Number(editingId),
+                        title,
+                        price,
+                        images: imagesArray,
+                        sizes: sizesArray,
+                        colors: colorsArray,
+                        desc
+                    };
+                }
+            } else {
+                // إضافة منتج جديد
+                const newProd = {
+                    id: Date.now(),
+                    title,
+                    price,
+                    images: imagesArray,
+                    sizes: sizesArray,
+                    colors: colorsArray,
+                    desc
+                };
+                products.push(newProd);
+            }
 
-            products.push(newProd);
+            const commitMsg = editingId ? `Update product: ${title}` : `Add product: ${title}`;
+            await pushToGitHub(commitMsg);
+            resetForm();
+        }
+
+        async function pushToGitHub(commitMsg) {
+            const token = getGithubToken();
+            const statusEl = document.getElementById('admin-status');
+            statusEl.innerText = 'جاري التحديث على GitHub... ⏳';
+            document.getElementById('save-btn').disabled = true;
 
             try {
                 const updatedContent = btoa(unescape(encodeURIComponent(JSON.stringify(products, null, 2))));
                 const bodyData = {
-                    message: `Add product: ${title}`,
+                    message: commitMsg,
                     content: updatedContent,
                     sha: currentSha
                 };
@@ -533,15 +635,8 @@
                 if (res.ok) {
                     const result = await res.json();
                     currentSha = result.content.sha;
-                    statusEl.innerText = 'تم رفع المنتج بنجاح! سيظهر لجميع الزوار فوراً 🎉';
+                    statusEl.innerText = 'تمت العملية وتحديث GitHub بنجاح! 🎉';
                     renderProducts();
-
-                    document.getElementById('p-title').value = '';
-                    document.getElementById('p-price').value = '';
-                    document.getElementById('p-images').value = '';
-                    document.getElementById('p-sizes').value = '';
-                    document.getElementById('p-colors').value = '';
-                    document.getElementById('p-desc').value = '';
                 } else {
                     statusEl.innerText = 'حدث خطأ أثناء التحديث. تأكد من صحة الـ Token.';
                 }
@@ -601,6 +696,10 @@
                                 <div class="product-price">${p.price} ج.م</div>
                                 ${selectsHTML}
                                 <button class="btn-add" onclick="addToCart(${p.id})">إضافة للسلة 🛒</button>
+                                <div class="admin-controls">
+                                    <button class="btn-edit" onclick="editProduct(${p.id})">تعديل ✏️</button>
+                                    <button class="btn-delete" onclick="deleteProduct(${p.id})">حذف 🗑️</button>
+                                </div>
                             </div>
                         </div>
                     </div>
