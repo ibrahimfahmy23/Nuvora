@@ -492,7 +492,13 @@
         </article>
     `;
 }).join('');
+}).join('');
+}
 
+function changeMainImg(prodId, newSrc) {
+    const imgEl = document.querySelector(`#prod-img-${prodId}`);
+    if (imgEl) imgEl.src = newSrc;
+}
   function renderStore() {
     renderCategoryButtons();
     renderProducts();
