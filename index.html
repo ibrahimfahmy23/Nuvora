@@ -316,22 +316,24 @@
   }
 
   /* ---------- CART FUNCTIONS ---------- */
-  function addToCart(id) {
-    const products = getProducts();
-    const product = products.find(p => p.id === id);
-    if (!product) return;
+  function addToCart(prodId) {
+    const prod = products.find(p => p.id === prodId);
+    if (!prod) return;
 
-    const existing = cart.find(item => item.id === id);
-    if (existing) {
-      existing.qty += 1;
-    } else {
-      cart.push({ ...product, qty: 1 });
-    }
+    // جلب الخيار المختار (إن وجد)
+    const optionSelect = document.getElementById(`option-${prodId}`);
+    const selectedOption = optionSelect ? optionSelect.value : null;
 
+    const cartItem = {
+        ...prod,
+        selectedOption: selectedOption,
+        qty: 1
+    };
+
+    // إضافة المنتج مع خياره للسلة
+    cart.push(cartItem);
     updateCartUI();
-    showToast("تم إضافة المنتج للسلة!");
-  }
-
+}
   function updateQty(id, delta) {
     const item = cart.find(i => i.id === id);
     if (!item) return;
@@ -403,11 +405,12 @@
     orderMsg += `*المنتجات المطلوبة:*\n`;
 
     let total = 0;
-    cart.forEach((item, index) => {
-      const itemTotal = parseFloat(item.price) * item.qty;
-      total += itemTotal;
-      orderMsg += `${index + 1}. ${item.title} (${item.qty} قطعة) - ${itemTotal} ج.م\n`;
-    });
+cart.forEach((item, index) => {
+    const itemTotal = parseFloat(item.price) * item.qty;
+    total += itemTotal;
+    const optText = item.selectedOption ? ` (${item.selectedOption})` : '';
+    orderMsg += `${index + 1}. ${item.title}${optText} (${item.qty} قطعة) - ${itemTotal} ج.م\n`;
+});
 
     orderMsg += `\n*الإجمالي الكلي:* ${total} ج.م`;
 
