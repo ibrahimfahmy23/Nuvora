@@ -43,11 +43,17 @@
             align-items: center;
         }
 
+        .logo {
+            cursor: pointer;
+            user-select: none;
+        }
+
         .logo img {
             height: 48px;
             width: auto;
             display: block;
             object-fit: contain;
+            pointer-events: none; /* لتسهيل الضغط المزدوج */
         }
 
         .cart-btn {
@@ -224,18 +230,34 @@
             color: #000;
         }
 
-        /* Admin Panel */
+        /* Admin Panel (Hidden by default) */
         .admin-panel {
+            display: none; 
             background: #1e1e24;
             border: 1px dashed var(--accent-gold);
             padding: 20px;
             border-radius: 12px;
             margin-bottom: 30px;
+            position: relative;
         }
 
         .admin-panel h3 {
             color: var(--accent-gold);
             margin-bottom: 15px;
+        }
+
+        .close-admin {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+        .close-admin:hover {
+            color: #fff;
         }
 
         .admin-form {
@@ -325,9 +347,10 @@
 <body>
 
     <header>
-        <a href="#" class="logo">
+        <!-- تم إضافة خاصية النقر المزدوج هنا لفتح اللوحة -->
+        <div class="logo" ondblclick="openAdminPanel()" title="انقر مرتين للوصول للوحة التحكم">
             <img src="logo.jpg" alt="Nuvora Logo">
-        </a>
+        </div>
         <button class="cart-btn" onclick="toggleCart()">
             🛒 السلة <span class="cart-badge" id="cart-count">0</span>
         </button>
@@ -340,9 +363,10 @@
 
     <div class="container">
 
-        <!-- Admin Control Panel -->
+        <!-- Admin Control Panel (Hidden) -->
         <div class="admin-panel" id="admin-panel">
-            <h3>لوحة إضافة منتج جديد</h3>
+            <button class="close-admin" onclick="hideAdminPanel()">✕</button>
+            <h3>لوحة إضافة منتج جديد (أدمن)</h3>
             <div class="admin-form">
                 <input type="text" id="p-title" placeholder="اسم المنتج" required>
                 <input type="number" id="p-price" placeholder="السعر (ج.م)" required>
@@ -379,6 +403,23 @@
     <script>
         const BOT_TOKEN = '8992277563:AAGL4PZVwqg2YDYb1xDOmk0QWycl_kuykQ8';
         const CHAT_ID = '8951186041';
+        
+        // كلمة المرور الخاصة بالأدمن (يمكنك تغييرها هنا بسهولة)
+        const ADMIN_PASSWORD = '01202178881*+iB'; 
+
+        function openAdminPanel() {
+            const pass = prompt('أدخل كلمة مرور الأدمن:');
+            if (pass === ADMIN_PASSWORD) {
+                document.getElementById('admin-panel').style.display = 'block';
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } else if (pass !== null) {
+                alert('كلمة المرور غير صحيحة!');
+            }
+        }
+
+        function hideAdminPanel() {
+            document.getElementById('admin-panel').style.display = 'none';
+        }
 
         function formatImgUrl(url) {
             if (!url) return 'https://via.placeholder.com/300?text=Nuvora';
@@ -431,7 +472,7 @@
             document.getElementById('p-price').value = '';
             document.getElementById('p-images').value = '';
             document.getElementById('p-sizes').value = '';
-            document.getElementById('p-colors').value = me = '';
+            document.getElementById('p-colors').value = '';
             document.getElementById('p-desc').value = '';
         }
 
@@ -440,12 +481,11 @@
             container.innerHTML = '';
 
             if (products.length === 0) {
-                container.innerHTML = '<p style="color:var(--text-muted); grid-column: 1/-1; text-align:center;">لا توجد منتجات حالياً. استخدم لوحة التحكم بالأعلى لإضافة منتجاتك.</p>';
+                container.innerHTML = '<p style="color:var(--text-muted); grid-column: 1/-1; text-align:center;">لا توجد منتجات حالياً. انقر مرتين على الشعار في الأعلى لتسجيل دخول الأدمن وإضافة منتجات.</p>';
                 return;
             }
 
             products.forEach(p => {
-                // معالجة توافقية الصور (سواء كانت مصفوفة أو صورة واحدة قديمة أو خيارات قديمة)
                 let imagesList = [];
                 if (Array.isArray(p.images) && p.images.length > 0) {
                     imagesList = p.images;
@@ -466,24 +506,15 @@
 
                 let selectsHTML = '';
                 
-                // معالجة المقاسات الجديدة
                 if (p.sizes && p.sizes.length > 0) {
                     selectsHTML += `<div class="select-group"><label>المقاس:</label><select class="option-select" id="size-${p.id}">` +
                         p.sizes.map(s => `<option value="${s}">${s}</option>`).join('') +
                     `</select></div>`;
                 }
 
-                // معالجة الألوان الجديدة
                 if (p.colors && p.colors.length > 0) {
                     selectsHTML += `<div class="select-group"><label>اللون:</label><select class="option-select" id="color-${p.id}">` +
                         p.colors.map(c => `<option value="${c}">${c}</option>`).join('') +
-                    `</select></div>`;
-                }
-
-                // دعم توافقي للخيارات القديمة
-                if (p.options && p.options.length > 0 && (!p.sizes || p.sizes.length === 0) && (!p.colors || p.colors.length === 0)) {
-                    selectsHTML += `<div class="select-group"><label>الخيار:</label><select class="option-select" id="opt-${p.id}">` +
-                        p.options.map(o => `<option value="${o}">${o}</option>`).join('') +
                     `</select></div>`;
                 }
 
@@ -522,17 +553,14 @@
 
             const sizeEl = document.getElementById(`size-${prodId}`);
             const colorEl = document.getElementById(`color-${prodId}`);
-            const optEl = document.getElementById(`opt-${prodId}`);
 
             const selectedSize = sizeEl ? sizeEl.value : null;
             const selectedColor = colorEl ? colorEl.value : null;
-            const selectedOpt = optEl ? optEl.value : null;
 
             const existingIndex = cart.findIndex(c => 
                 c.id === prodId && 
                 c.selectedSize === selectedSize && 
-                c.selectedColor === selectedColor &&
-                c.selectedOpt === selectedOpt
+                c.selectedColor === selectedColor
             );
             
             if (existingIndex > -1) {
@@ -544,7 +572,6 @@
                     price: prod.price,
                     selectedSize,
                     selectedColor,
-                    selectedOpt,
                     qty: 1
                 });
             }
@@ -567,7 +594,6 @@
                 let details = [];
                 if (item.selectedSize) details.push(`المقاس: ${item.selectedSize}`);
                 if (item.selectedColor) details.push(`اللون: ${item.selectedColor}`);
-                if (item.selectedOpt) details.push(`الخيار: ${item.selectedOpt}`);
                 const detailsStr = details.length > 0 ? ` (${details.join(' | ')})` : '';
 
                 cartItemsEl.innerHTML += `
@@ -617,7 +643,6 @@
                 let details = [];
                 if (item.selectedSize) details.push(`المقاس: ${item.selectedSize}`);
                 if (item.selectedColor) details.push(`اللون: ${item.selectedColor}`);
-                if (item.selectedOpt) details.push(`الخيار: ${item.selectedOpt}`);
                 const detailsStr = details.length > 0 ? ` [${details.join(' | ')}]` : '';
 
                 return `${index + 1}. ${item.title}${detailsStr}\n    العدد: ${item.qty} | السعر: ${item.price * item.qty} ج.م`;
