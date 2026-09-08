@@ -104,7 +104,7 @@
         /* Grid */
         .products-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
             gap: 20px;
         }
 
@@ -127,7 +127,7 @@
 
         .product-img-wrap {
             width: 100%;
-            height: 250px;
+            height: 260px;
             background: #000;
             position: relative;
         }
@@ -142,16 +142,16 @@
             display: flex;
             gap: 6px;
             padding: 8px;
-            background: rgba(0,0,0,0.4);
+            background: rgba(0,0,0,0.5);
             overflow-x: auto;
         }
 
         .thumb-bar img {
-            width: 40px;
-            height: 40px;
-            border-radius: 4px;
+            width: 45px;
+            height: 45px;
+            border-radius: 6px;
             cursor: pointer;
-            border: 1px solid transparent;
+            border: 2px solid transparent;
             object-fit: cover;
         }
 
@@ -186,6 +186,18 @@
             margin-bottom: 10px;
         }
 
+        .select-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .select-group label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
         .option-select {
             width: 100%;
             padding: 8px;
@@ -193,7 +205,6 @@
             color: #fff;
             border: 1px solid var(--border-color);
             border-radius: 6px;
-            margin-bottom: 12px;
         }
 
         .btn-add {
@@ -230,7 +241,7 @@
         .admin-form {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 10px;
+            gap: 12px;
         }
 
         .admin-form input, .admin-form textarea {
@@ -335,8 +346,9 @@
             <div class="admin-form">
                 <input type="text" id="p-title" placeholder="اسم المنتج" required>
                 <input type="number" id="p-price" placeholder="السعر (ج.م)" required>
-                <input type="text" id="p-images" placeholder="روابط الصور مفصولة بفاصلة (مثال: img1.jpg, img2.jpg)">
-                <input type="text" id="p-options" placeholder="خيارات/ألوان مفصولة بفاصلة (مثال: أسود, أحمر)">
+                <input type="text" id="p-images" placeholder="روابط الصور مفصولة بفاصلة (img1.jpg, img2.jpg)" style="grid-column: 1 / -1;">
+                <input type="text" id="p-sizes" placeholder="المقاسات مفصولة بفاصلة (مثال: S, M, L, XL)">
+                <input type="text" id="p-colors" placeholder="الألوان مفصولة بفاصلة (مثال: أسود, أحمر)">
                 <textarea id="p-desc" placeholder="وصف المنتج" style="grid-column: 1 / -1;"></textarea>
                 <button onclick="saveProduct()">إضافة المنتج للمتجر</button>
             </div>
@@ -365,11 +377,9 @@
     </div>
 
     <script>
-        // التوكين ومعرف الشات الخاص بـ Telegram Bot
         const BOT_TOKEN = '8992277563:AAGL4PZVwqg2YDYb1xDOmk0QWycl_kuykQ8';
         const CHAT_ID = '8951186041';
 
-        // دالة معالجة روابط Google Drive تلقائياً
         function formatImgUrl(url) {
             if (!url) return 'https://via.placeholder.com/300?text=Nuvora';
             url = url.trim();
@@ -382,7 +392,6 @@
             return url;
         }
 
-        // جلب المنتجات المخزنة أو تعيين افتراضية
         let products = JSON.parse(localStorage.getItem('nuvora_products')) || [];
         let cart = JSON.parse(localStorage.getItem('nuvora_cart')) || [];
 
@@ -390,7 +399,8 @@
             const title = document.getElementById('p-title').value.trim();
             const price = parseFloat(document.getElementById('p-price').value);
             const rawImages = document.getElementById('p-images').value;
-            const rawOptions = document.getElementById('p-options').value;
+            const rawSizes = document.getElementById('p-sizes').value;
+            const rawColors = document.getElementById('p-colors').value;
             const desc = document.getElementById('p-desc').value.trim();
 
             if (!title || isNaN(price)) {
@@ -399,14 +409,16 @@
             }
 
             const imagesArray = rawImages ? rawImages.split(',').map(url => formatImgUrl(url)) : ['https://via.placeholder.com/300?text=Nuvora'];
-            const optionsArray = rawOptions ? rawOptions.split(',').map(opt => opt.trim()).filter(opt => opt !== '') : [];
+            const sizesArray = rawSizes ? rawSizes.split(',').map(s => s.trim()).filter(s => s !== '') : [];
+            const colorsArray = rawColors ? rawColors.split(',').map(c => c.trim()).filter(c => c !== '') : [];
 
             const newProd = {
                 id: Date.now(),
                 title,
                 price,
                 images: imagesArray,
-                options: optionsArray,
+                sizes: sizesArray,
+                colors: colorsArray,
                 desc
             };
 
@@ -415,11 +427,11 @@
             renderProducts();
             alert('تمت إضافة المنتج بنجاح!');
             
-            // إعادة تعيين الخانات
             document.getElementById('p-title').value = '';
             document.getElementById('p-price').value = '';
             document.getElementById('p-images').value = '';
-            document.getElementById('p-options').value = '';
+            document.getElementById('p-sizes').value = '';
+            document.getElementById('p-colors').value = '';
             document.getElementById('p-desc').value = '';
         }
 
@@ -442,11 +454,18 @@
                     `</div>`;
                 }
 
-                let optionsHTML = '';
-                if (p.options && p.options.length > 0) {
-                    optionsHTML = `<select class="option-select" id="opt-${p.id}">` +
-                        p.options.map(o => `<option value="${o}">${o}</option>`).join('') +
-                    `</select>`;
+                let selectsHTML = '';
+                
+                if (p.sizes && p.sizes.length > 0) {
+                    selectsHTML += `<div class="select-group"><label>المقاس:</label><select class="option-select" id="size-${p.id}">` +
+                        p.sizes.map(s => `<option value="${s}">${s}</option>`).join('') +
+                    `</select></div>`;
+                }
+
+                if (p.colors && p.colors.length > 0) {
+                    selectsHTML += `<div class="select-group"><label>اللون:</label><select class="option-select" id="color-${p.id}">` +
+                        p.colors.map(c => `<option value="${c}">${c}</option>`).join('') +
+                    `</select></div>`;
                 }
 
                 container.innerHTML += `
@@ -462,7 +481,7 @@
                             </div>
                             <div>
                                 <div class="product-price">${p.price} ج.م</div>
-                                ${optionsHTML}
+                                ${selectsHTML}
                                 <button class="btn-add" onclick="addToCart(${p.id})">إضافة للسلة 🛒</button>
                             </div>
                         </div>
@@ -482,10 +501,17 @@
             const prod = products.find(p => p.id === prodId);
             if (!prod) return;
 
-            const optEl = document.getElementById(`opt-${prodId}`);
-            const selectedOpt = optEl ? optEl.value : null;
+            const sizeEl = document.getElementById(`size-${prodId}`);
+            const colorEl = document.getElementById(`color-${prodId}`);
 
-            const existingIndex = cart.findIndex(c => c.id === prodId && c.selectedOpt === selectedOpt);
+            const selectedSize = sizeEl ? sizeEl.value : null;
+            const selectedColor = colorEl ? colorEl.value : null;
+
+            const existingIndex = cart.findIndex(c => 
+                c.id === prodId && 
+                c.selectedSize === selectedSize && 
+                c.selectedColor === selectedColor
+            );
             
             if (existingIndex > -1) {
                 cart[existingIndex].qty += 1;
@@ -494,7 +520,8 @@
                     id: prod.id,
                     title: prod.title,
                     price: prod.price,
-                    selectedOpt: selectedOpt,
+                    selectedSize,
+                    selectedColor,
                     qty: 1
                 });
             }
@@ -513,11 +540,16 @@
             let total = 0;
             cart.forEach((item, index) => {
                 total += item.price * item.qty;
-                const optText = item.selectedOpt ? ` (${item.selectedOpt})` : '';
+                
+                let details = [];
+                if (item.selectedSize) details.push(`المقاس: ${item.selectedSize}`);
+                if (item.selectedColor) details.push(`اللون: ${item.selectedColor}`);
+                const detailsStr = details.length > 0 ? ` (${details.join(' | ')})` : '';
+
                 cartItemsEl.innerHTML += `
                     <div class="cart-item">
                         <div>
-                            <strong>${item.title}${optText}</strong>
+                            <strong>${item.title}${detailsStr}</strong>
                             <br><small>${item.price} ج.م × ${item.qty}</small>
                         </div>
                         <div>
@@ -558,8 +590,12 @@
             }
 
             let itemsList = cart.map((item, index) => {
-                const optText = item.selectedOpt ? ` [الخيار: ${item.selectedOpt}]` : '';
-                return `${index + 1}. ${item.title}${optText}\n    العدد: ${item.qty} | السعر: ${item.price * item.qty} ج.م`;
+                let details = [];
+                if (item.selectedSize) details.push(`المقاس: ${item.selectedSize}`);
+                if (item.selectedColor) details.push(`اللون: ${item.selectedColor}`);
+                const detailsStr = details.length > 0 ? ` [${details.join(' | ')}]` : '';
+
+                return `${index + 1}. ${item.title}${detailsStr}\n    العدد: ${item.qty} | السعر: ${item.price * item.qty} ج.م`;
             }).join('\n');
 
             let totalSum = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
@@ -598,7 +634,6 @@
             }
         }
 
-        // تشغيل البداية
         renderProducts();
         updateCartUI();
     </script>
